@@ -149,12 +149,36 @@ import { sendToBackground } from '@plasmohq/messaging'
 - Justify each permission in manifest
 - Never use `eval()` or inject untrusted scripts
 
-### apps/sandbox (Claude SDK)
+### apps/sandbox (Claude CLI Subprocess)
+
+**Architecture (Feb 2025):**
+- Spawns `claude` CLI directly as a subprocess
+- Uses user's Max subscription (no API costs!)
+- Claude runs in the workspace directory with file tools
+- Streams JSON output for real-time UI updates
+
+**How it works:**
+```typescript
+// Spawn claude with --print for non-interactive mode
+const claude = spawn('claude', [
+  '--print',
+  '--output-format', 'stream-json',
+  '--allowedTools', 'Read,Edit,Write,Glob,Grep',
+  '--permission-mode', 'acceptEdits',
+  '--system-prompt', systemPrompt,
+  prompt
+], { cwd: workspacePath })
+```
+
+**Prerequisites:**
+- User must have Claude Code installed: `npm install -g @anthropic-ai/claude-code`
+- User must be logged in: `claude login`
+- Uses Max subscription - no API key needed!
 
 **Security Isolation:**
-- Run in isolated Node.js process
-- Set execution timeouts (max 30s)
-- Never access host environment variables
+- Claude runs in isolated workspace directory
+- Only file tools allowed (Read, Edit, Write, Glob, Grep)
+- Auto-accepts edits within workspace only
 - Sanitize all inputs from WebSocket messages
 
 **WebSocket Handling:**
@@ -381,10 +405,19 @@ NEXT_PUBLIC_SANDBOX_WS_URL=ws://localhost:3001
 
 Required in `.env`:
 ```
-ANTHROPIC_API_KEY=
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+PORT=3001
 ```
+
+**Prerequisites (on user's machine):**
+```bash
+# Install Claude Code CLI
+npm install -g @anthropic-ai/claude-code
+
+# Login with Max subscription
+claude login
+```
+
+**Note:** No API key needed! The sandbox spawns the Claude CLI which uses the user's Max subscription.
 
 **NEVER commit .env files. Use .env.example for templates.**
 

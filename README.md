@@ -31,7 +31,7 @@ A browser extension + web app that lets anyone:
 ┌─────────────────────────────────────────────────────────────────┐
 │                     SANDBOX SERVICE                             │
 │  • Receives HTML snapshot from extension                        │
-│  • Runs Claude with editing tools                               │
+│  • Spawns Claude CLI (uses Max subscription)                    │
 │  • Returns preview + diff                                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -79,10 +79,15 @@ NEXT_PUBLIC_SANDBOX_WS_URL=ws://localhost:3001
 
 ### Sandbox (`apps/sandbox/.env.local`)
 ```
-ANTHROPIC_API_KEY=
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+PORT=3001
 ```
+
+**Important:** The sandbox requires Claude Code CLI installed and logged in:
+```bash
+npm install -g @anthropic-ai/claude-code
+claude login
+```
+Uses your Max subscription - no API key needed!
 
 ## License
 
