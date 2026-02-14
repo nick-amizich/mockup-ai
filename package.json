@@ -1,0 +1,30 @@
+{
+  "name": "mockup-ai",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "dev:web": "turbo run dev --filter=@mockup-ai/web",
+    "dev:extension": "turbo run dev --filter=@mockup-ai/extension",
+    "dev:sandbox": "turbo run dev --filter=@mockup-ai/sandbox",
+    "build:web": "turbo run build --filter=@mockup-ai/web",
+    "build:extension": "turbo run build --filter=@mockup-ai/extension",
+    "build:sandbox": "turbo run build --filter=@mockup-ai/sandbox"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@10.0.0"
+}
