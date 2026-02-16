@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mockup-ai-sandbox
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      # Persistent temp directory for workspaces (optional, for debugging)
+      - sandbox-workspaces:/tmp/mockup-ai
+    healthcheck:
+      test: ["CMD", "node", "-e", "const ws = require('ws'); const client = new ws('ws://localhost:3001'); client.on('open', () => process.exit(0)); client.on('error', () => process.exit(1)); setTimeout(() => process.exit(1), 5000);"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Nginx reverse proxy for SSL termination (optional, for production)
+  nginx:
+    image: nginx:alpine
+    container_name: mockup-ai-nginx
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - sandbox
+    profiles:
+      - production
+
+volumes:
+  sandbox-workspaces:

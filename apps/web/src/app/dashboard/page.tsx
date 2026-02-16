@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Ticket, FolderOpen, Sparkles } from 'lucide-react'
+import { GitHubConnection } from '@/components/github-connection'
 
 interface TicketWithProject {
   id: string
@@ -43,6 +44,11 @@ export default async function DashboardPage() {
             New Project
           </Button>
         </Link>
+      </div>
+
+      {/* GitHub Integration */}
+      <div className="mb-8">
+        <GitHubConnection />
       </div>
 
       {/* Stats */}

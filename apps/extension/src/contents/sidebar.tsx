@@ -1,7 +1,7 @@
 import cssText from 'data-text:./sidebar.css'
 import type { PlasmoCSConfig, PlasmoGetStyle } from 'plasmo'
 import { useState, useEffect, useRef } from 'react'
-import { Sparkles, X, Send, Loader2, Check, Copy } from 'lucide-react'
+import { Sparkles, X, Send, Loader2 } from 'lucide-react'
 
 export const config: PlasmoCSConfig = {
   matches: ['https://*/*', 'http://*/*'],
@@ -59,11 +59,15 @@ function MockupSidebar() {
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
-  const [showPreview, setShowPreview] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const previewRef = useRef<HTMLIFrameElement>(null)
+
+  // Notify overlay when sidebar opens/closes
+  useEffect(() => {
+    window.postMessage({
+      type: isOpen ? 'mockup:sidebar_opened' : 'mockup:sidebar_closed'
+    }, '*')
+  }, [isOpen])
 
   useEffect(() => {
     // Listen for toggle messages from popup
@@ -137,8 +141,11 @@ function MockupSidebar() {
             <body>${data.html.replace(/.*<body[^>]*>/is, '').replace(/<\/body>.*/is, '')}</body>
             </html>
           `
-          setPreviewHtml(fullHtml)
-          setShowPreview(true)
+          // Send preview to full-page overlay
+          window.postMessage({
+            type: 'mockup:preview_update',
+            html: fullHtml
+          }, '*')
         } else if (data.type === 'done') {
           setLoading(false)
         }
@@ -200,38 +207,16 @@ function MockupSidebar() {
   if (!isOpen) return null
 
   return (
-    <div className={`mockup-sidebar ${showPreview ? 'with-preview' : ''}`}>
+    <div className="mockup-sidebar">
       <header className="sidebar-header">
         <div className="sidebar-logo">
           <Sparkles className="icon" />
           <span>Mockup AI</span>
         </div>
-        <div className="header-actions">
-          {previewHtml && (
-            <button
-              className={`preview-toggle ${showPreview ? 'active' : ''}`}
-              onClick={() => setShowPreview(!showPreview)}
-              title={showPreview ? 'Hide Preview' : 'Show Preview'}
-            >
-              {showPreview ? 'Hide Preview' : 'Show Preview'}
-            </button>
-          )}
-          <button className="close-btn" onClick={() => setIsOpen(false)}>
-            <X className="icon-sm" />
-          </button>
-        </div>
+        <button className="close-btn" onClick={() => setIsOpen(false)}>
+          <X className="icon-sm" />
+        </button>
       </header>
-
-      {showPreview && previewHtml && (
-        <div className="preview-panel">
-          <iframe
-            ref={previewRef}
-            srcDoc={previewHtml}
-            title="Mockup Preview"
-            sandbox="allow-same-origin"
-          />
-        </div>
-      )}
 
       <main className="sidebar-content">
         {!sessionId ? (

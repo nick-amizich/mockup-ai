@@ -7,6 +7,7 @@ import { ClaudeSession } from './claude-session.js'
 config()
 
 const PORT = parseInt(process.env.PORT || '3001', 10)
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 
 interface Session {
   id: string
@@ -20,6 +21,7 @@ const sessions = new Map<string, Session>()
 const wss = new WebSocketServer({ port: PORT })
 
 console.log(`Mockup AI Sandbox server running on ws://localhost:${PORT}`)
+console.log(`Authentication: ${ANTHROPIC_API_KEY ? 'API Key configured' : 'Using CLI auth (run "claude login" first)'}`)
 
 wss.on('connection', (ws: WebSocket) => {
   console.log('New WebSocket connection')
@@ -60,6 +62,13 @@ interface StartSessionMessage {
     css: string
     url: string
     title: string
+    // GitHub repo context (Phase 2)
+    repo?: {
+      owner: string
+      name: string
+      branch: string
+      token: string
+    }
   }
 }
 
@@ -82,28 +91,36 @@ async function handleMessage(ws: WebSocket, message: IncomingMessage) {
       const sessionId = uuidv4()
       const workspace = new WorkspaceManager(sessionId)
 
-      // Create workspace with captured page
-      await workspace.create(message.data.html, message.data.css)
+      // Create workspace with captured page and optional repo context
+      await workspace.create(message.data.html, message.data.css, message.data.repo)
 
-      // Initialize Claude session
-      const claude = new ClaudeSession(workspace, async (event) => {
-        ws.send(JSON.stringify(event))
+      // Initialize Claude session with API key and page context
+      const claude = new ClaudeSession(
+        workspace,
+        async (event) => {
+          ws.send(JSON.stringify(event))
 
-        // When Claude is done, send the updated HTML/CSS for preview
-        if (event.type === 'done') {
-          try {
-            const html = await workspace.readFile('index.html')
-            const css = await workspace.readFile('styles.css')
-            ws.send(JSON.stringify({
-              type: 'preview_update',
-              html,
-              css
-            }))
-          } catch (error) {
-            console.error('Failed to read updated files:', error)
+          // When Claude is done, send the updated HTML/CSS for preview
+          if (event.type === 'done') {
+            try {
+              const html = await workspace.readFile('index.html')
+              const css = await workspace.readFile('styles.css')
+              ws.send(JSON.stringify({
+                type: 'preview_update',
+                html,
+                css
+              }))
+            } catch (error) {
+              console.error('Failed to read updated files:', error)
+            }
           }
+        },
+        {
+          apiKey: ANTHROPIC_API_KEY,
+          pageTitle: message.data.title,
+          pageUrl: message.data.url
         }
-      })
+      )
 
       sessions.set(sessionId, { id: sessionId, ws, workspace, claude })
 

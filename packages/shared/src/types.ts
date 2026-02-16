@@ -65,6 +65,44 @@ export interface Ticket {
   created_at: string
 }
 
+// GitHub integration types
+export interface GitHubConnection {
+  id: string
+  user_id: string
+  github_username: string
+  github_user_id: number
+  scopes: string[]
+  token_expires_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectRepository {
+  id: string
+  project_id: string
+  repo_owner: string
+  repo_name: string
+  repo_full_name: string
+  default_branch: string
+  last_synced_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GitHubRepo {
+  id: number
+  name: string
+  full_name: string
+  owner: {
+    login: string
+    avatar_url: string
+  }
+  default_branch: string
+  private: boolean
+  html_url: string
+  description: string | null
+}
+
 // WebSocket message types
 export interface WSStartSession {
   type: 'start_session'
@@ -73,6 +111,13 @@ export interface WSStartSession {
     css: string
     url: string
     title: string
+    // GitHub repo context (Phase 2)
+    repo?: {
+      owner: string
+      name: string
+      branch: string
+      token: string  // Decrypted GitHub token (passed securely)
+    }
   }
 }
 
